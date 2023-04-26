@@ -1,0 +1,33 @@
+<odoo>
+    <record id="stock_valuation_layer_form" model="ir.ui.view">
+        <field name="name">stock.valuation.layer.form</field>
+        <field name="model">stock.valuation.layer</field>
+        <field name="inherit_id" ref="stock_account.stock_valuation_layer_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='valuation']/group" position="after">
+                <group>
+                    <field name="accounting_date"/>  
+                    <field name="new_value"/>
+                    <field name="new_unit_cost"/>
+                    <field name="new_remaining_value"/>
+                    <field name="new_remaining_qty"/>                
+                    </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="stock_valuation_layer_tree" model="ir.ui.view">
+        <field name="name">stock.valuation.layer.tree</field>
+        <field name="model">stock.valuation.layer</field>
+        <field name="inherit_id" ref="stock_account.stock_valuation_layer_tree"/>        
+        <field name="arch" type="xml">
+            <field name="company_id" position="before">
+                <field name="new_value" sum="New Total Value"/>
+                <field name="new_unit_cost" optional="hide"/>
+                <field name="new_remaining_value" optional="hide" sum="Total Rem Value"/>
+                <field name="new_remaining_qty" optional="hide"/>
+                <field name="accounting_date" optional="hide"/>                
+            </field>
+        </field>
+    </record>    
+</odoo>

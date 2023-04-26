@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="stock_valuation_layer_recompute_form_view" model="ir.ui.view">
+        <field name="name">svl.recompute.form</field>
+        <field name="model">svl.recompute</field>
+        <field name="arch" type="xml">
+            <form string="Product Recompute">
+                <group>
+                    <field name="company_id" readonly="1"/>   
+                    <field name="recompute_type" />
+                    <field name="product_id"/>
+                    <field name="date_from"/>
+                    <field name="run_svl_recompute" />                    
+                    <field name="update_svl_values" />
+                    <field name="fix_remaining_qty" />                    
+                    <field name="update_account_moves" string="Create/Update SVL Account Move"/>
+                </group>
+                <notebook>
+                    <sheet>
+                        <group>
+                            <field name="location_ids">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="location_id" domain="[('usage', '=', 'internal')]"/>
+                                </tree>
+
+                            </field>
+                        </group>
+                    </sheet>
+                </notebook>
+                <footer>
+                    <button name="buttton_do_correction" string="Recompute" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel" />
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_svl_recompute" model="ir.actions.act_window">
+        <field name="name">SVL Recompute</field>
+        <field name="res_model">svl.recompute</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem action="action_svl_recompute" id="menu_svl_recompute" parent="stock.menu_stock_warehouse_mgmt" sequence="200"/>    
+
+</odoo>

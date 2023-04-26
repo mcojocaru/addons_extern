@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_stock_sheet_report_form" model="ir.ui.view">
+        <field name="name">stock.storage.sheet.form</field>
+        <field name="model">l10n.ro.stock.storage.sheet</field>
+        <field name="inherit_id" ref="l10n_ro_stock_report.view_stock_sheet_report_form"/>
+        <field name="arch" type="xml">
+            <field name="company_id" position="after">
+                <field name="use_svl_new_values" groups="base.group_no_one"/>
+            </field>
+        </field>
+    </record>
+
+</odoo>

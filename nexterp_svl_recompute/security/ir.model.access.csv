@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_svl_recompute,access_svl_recompute,model_svl_recompute,base.group_user,1,1,1,1
+access_svl_recompute_location,access_svl_recompute_location,model_svl_recompute_location,base.group_user,1,1,1,1
