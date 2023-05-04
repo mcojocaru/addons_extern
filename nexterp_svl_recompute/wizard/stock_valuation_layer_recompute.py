@@ -37,7 +37,7 @@ class StockValuationLayerRecompute(models.TransientModel):
         selection=[('fifo_average', 'FIFO/Average'), 
         ('manufacturing', 'Manufacturing Orders')], string="Type", default="fifo_average")
     company_id = fields.Many2one('res.company', default=lambda self: self.env.company)
-    product_id = fields.Many2one('product.product', "Related product", check_company=True)
+    product_ids = fields.Many2many('product.product', string="Related products", check_company=True)
     date_from = fields.Date("Recompute Start Date")
     location_ids = fields.One2many(
         'svl.recompute.location',
@@ -47,7 +47,7 @@ class StockValuationLayerRecompute(models.TransientModel):
     update_account_moves = fields.Boolean(
         default=False
     )
-    fix_remaining_qty = fields.Boolean(
+    fix_remaining_qty = fields.Boolean('Fix Remaining Qty/Val',
         default=False
     )
     update_svl_values = fields.Boolean(
@@ -90,10 +90,10 @@ class StockValuationLayerRecompute(models.TransientModel):
 
     def _prepare_svls(self):
         #backup unit_cost and value
-        if self.product_id:
-            products = self.product_id
+        if self.product_ids:
+            products = self.product_ids
         else:
-            products = self.product_id or self.env['product.product'].search([])
+            products = self.env['product.product'].search([])
 
         locations = self.location_ids.mapped('location_id')
         domain = ['&',
@@ -111,10 +111,10 @@ class StockValuationLayerRecompute(models.TransientModel):
             svl.new_remaining_qty = svl.remaining_qty
 
     def action_start_recompute(self):
-        if self.product_id:
-            products = self.product_id
+        if self.product_ids:
+            products = self.product_ids
         else:
-            products = self.product_id or self.env['product.product'].search([])
+            products = self.env['product.product'].search([])
         locations = self.location_ids.mapped('location_id')
 
         if self.recompute_type == 'fifo_average':
@@ -485,10 +485,10 @@ class StockValuationLayerRecompute(models.TransientModel):
 
 
     def _fix_remaining_qty_value(self):
-        if self.product_id:
-            products = self.product_id
+        if self.product_ids:
+            products = self.product_ids
         else:
-            products = self.product_id or self.env['product.product'].search([])
+            products = self.env['product.product'].search([])
 
         locations = self.location_ids.mapped('location_id')
         if len(products) == 1:
@@ -529,10 +529,10 @@ class StockValuationLayerRecompute(models.TransientModel):
 
 
     def _finalize_svls(self):
-        if self.product_id:
-            products = self.product_id
+        if self.product_ids:
+            products = self.product_ids
         else:
-            products = self.product_id or self.env['product.product'].search([])
+            products = self.env['product.product'].search([])
 
         locations = self.location_ids.mapped('location_id')
         date_from = fields.Datetime.to_datetime(self.date_from)
