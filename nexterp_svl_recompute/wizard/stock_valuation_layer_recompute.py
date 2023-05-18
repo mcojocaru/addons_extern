@@ -342,7 +342,7 @@ class StockValuationLayerRecompute(models.TransientModel):
         while should_restart_fifo:
             should_restart_fifo = False
 
-            domain_in = date_domain + [('product_id', '=', product.id), ("l10n_ro_location_dest_id", "=", loc.id), ('quantity', '>', 0)]
+            domain_in = date_domain + [('product_id', '=', product.id), ("l10n_ro_location_dest_id", "=", loc.id), ('quantity', '>', 0.001)]
             svl_loc_in = self.env['stock.valuation.layer'].search(domain_in)
 
             domain_out = date_domain + [('product_id', '=', product.id), ("l10n_ro_location_id", "=", loc.id), ('quantity', '<', 0)]
@@ -357,11 +357,13 @@ class StockValuationLayerRecompute(models.TransientModel):
             fifo_lst = []
             t_qty = quantity
             for svl_in in svl_loc_in:
+                value = sum([s.value for s in (svl_in + svl_in.stock_valuation_layer_ids)])
+                unit_cost = value / svl_in.quantity
                 if t_qty > svl_in.quantity:
-                    fifo_lst.append([svl_in.quantity, svl_in.unit_cost, svl_in.value, svl_in.stock_move_id, svl_in])
+                    fifo_lst.append([svl_in.quantity, unit_cost, value, svl_in.stock_move_id, svl_in])
                     t_qty -= svl_in.quantity
                 else:
-                    fifo_lst.append([t_qty, svl_in.unit_cost, svl_in.value, svl_in.stock_move_id, svl_in])
+                    fifo_lst.append([t_qty, unit_cost, value, svl_in.stock_move_id, svl_in])
                     break
             # assign unit cost to delivery svls based on fifo_lst
             print(svl_loc_out)
