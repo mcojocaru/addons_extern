@@ -394,7 +394,7 @@ class StockValuationLayerRecompute(models.TransientModel):
                             if svl_qty <= fifo_qty:
                                 last_price = fifo_lst[0][1]
                                 svl_out.unit_cost = last_price
-                                svl_out.value = (-1) * svl_qty * svl_out.unit_cost
+                                svl_out.value = (-1) * svl_qty * last_price
                                 fifo_lst[0][0] = fifo_qty - svl_qty
                                 if fifo_lst[0][0] == 0:
                                     fifo_lst.pop(0)
@@ -436,9 +436,10 @@ class StockValuationLayerRecompute(models.TransientModel):
                                 lambda svl: svl.id != svl_out.id and svl.quantity > 0
                             )
                             if other_svl:
-                                other_svl.unit_cost = svl_out.unit_cost
+                                uc = (svl_out.quantity != 0 and svl_out.value / svl_out.quantity) or 0
+                                other_svl.unit_cost = uc
                                 for o_svl in other_svl:
-                                    o_svl.value = o_svl.quantity * svl_out.unit_cost
+                                    o_svl.value = o_svl.quantity * uc
                         if should_restart_fifo:
                             svl_ret = self.env['stock.valuation.layer'].search(
                                 [('stock_move_id', 'in', svl_out.stock_move_id.move_dest_ids.ids)], order="id asc")
@@ -447,8 +448,9 @@ class StockValuationLayerRecompute(models.TransientModel):
                                 if round(abs(svl_ret.unit_cost - svl_out.unit_cost), 2) == 0:
                                     should_restart_fifo = False
                                 else:
-                                    svl_ret.unit_cost = svl_out.unit_cost
-                                    svl_ret.value = svl_out.unit_cost * svl_ret.quantity
+                                    uc = (svl_out.quantity != 0 and svl_out.value / svl_out.quantity) or 0                                    
+                                    svl_ret.unit_cost = uc
+                                    svl_ret.value = uc * svl_ret.quantity
                                     break
 
     def recompute_manufacturing_orders(self, products):
