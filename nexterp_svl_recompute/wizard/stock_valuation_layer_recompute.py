@@ -502,17 +502,23 @@ class StockValuationLayerRecompute(models.TransientModel):
         self.env.cr.commit()        
 
         # Fix remaining qty
-        for quant in self.env['stock.quant'].search(
-                [('product_id', 'in', products.ids), ('location_id', 'in', locations.ids)]
-            ):
-            if quant.location_id.usage == "internal":
+        for location in locations.filtered(lambda l: l.usage == 'internal'):
+            plds = self.env['stock.quant'].read_group(
+                        domain=[('product_id', 'in', products.ids), ('location_id', '=', location.id)],
+                        fields=['product_id', 'quantity:sum'],
+                        groupby=['product_id', 'location_id']
+                    )
+
+            for pld in plds:
+                product = self.env['product.product'].browse(pld['product_id'][0])            
+                qty = pld['quantity']
                 svls = self.env['stock.valuation.layer'].search(
-                    [("product_id", "=", quant.product_id.id),
-                        ("l10n_ro_location_dest_id", "=", quant.location_id.id),
+                    [("product_id", "=", product.id),
+                        ("l10n_ro_location_dest_id", "=", location.id),
                         ("quantity", ">", 0)])
-                qty = quant.quantity
+                qty = pld['quantity']
                 for svl in svls.sorted("create_date", reverse=True):
-                    unit_cost = svl.unit_cost or quant.product_id.with_company(self.company_id).standard_price                        
+                    unit_cost = svl.unit_cost or product.with_company(self.company_id).standard_price                        
                     if qty > 0:
                         added_cost = 0
                         linked_svl = self.env['stock.valuation.layer'].search([('stock_valuation_layer_id', '=', svl.id)])
