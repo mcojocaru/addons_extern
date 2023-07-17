@@ -518,7 +518,8 @@ class StockValuationLayerRecompute(models.TransientModel):
                         ("quantity", ">", 0)])
                 qty = pld['quantity']
                 for svl in svls.sorted("create_date", reverse=True):
-                    unit_cost = svl.unit_cost or product.with_company(self.company_id).standard_price                        
+                    unit_cost = svl.value / svl.quantity if svl.quantity else 0
+                    unit_cost = unit_cost or product.with_company(self.company_id).standard_price                        
                     if qty > 0:
                         added_cost = 0
                         linked_svl = self.env['stock.valuation.layer'].search([('stock_valuation_layer_id', '=', svl.id)])
