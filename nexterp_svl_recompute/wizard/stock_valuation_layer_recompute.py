@@ -348,11 +348,22 @@ class StockValuationLayerRecompute(models.TransientModel):
             domain_out = date_domain + [('product_id', '=', product.id), ("l10n_ro_location_id", "=", loc.id), ('quantity', '<', 0)]
             svl_loc_out = self.env['stock.valuation.layer'].search(domain_out)
 
-            quantity = abs(sum(svl_loc_out.mapped('quantity')))
-
             svl_loc_in = svl_loc_in.sorted(lambda svl: svl.create_date)
             svl_loc_out = svl_loc_out.sorted(lambda svl: svl.create_date)
 
+            #delete landed costs for svls out
+            svl_loc_out_lc = self.env['stock.valuation.layer'].search([('stock_valuation_layer_id', 'in', svl_loc_out.ids)])
+            if svl_loc_out_lc:
+                svl_loc_out_lc.mapped('account_move_id').button_draft()
+                svl_loc_out_lc.mapped('account_move_id').button_cancel()
+                self._cr.execute(
+                    'delete from stock_landed_cost where id in (select stock_landed_cost_id from stock_valuation_layer where id in %s)', 
+                    (tuple(svl_loc_out_lc.ids),)
+                )
+                self._cr.execute('delete from stock_valuation_layer where id in %s', (tuple(svl_loc_out_lc.ids),))
+
+
+            quantity = abs(sum(svl_loc_out.mapped('quantity')))
             # build fifo list, [qty, unit_cost] pairs
             fifo_lst = []
             t_qty = quantity
