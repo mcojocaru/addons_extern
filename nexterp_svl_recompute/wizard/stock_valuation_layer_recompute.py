@@ -138,7 +138,10 @@ class StockValuationLayerRecompute(models.TransientModel):
 
     def _delete_out_lcs(self, svl_loc_out):
         #delete landed costs for svls out
-        svl_loc_out_lc = self.env['stock.valuation.layer'].search([('stock_valuation_layer_id', 'in', svl_loc_out.ids)])
+        svl_loc_out_lc = self.env['stock.valuation.layer'].search(
+            [('stock_valuation_layer_id', 'in', svl_loc_out.ids),
+            ('l10n_ro_valued_type', 'in', ('consumption', 'delivery'))]
+        )
         if svl_loc_out_lc:
             svl_loc_out_lc.mapped('account_move_id').button_draft()
             svl_loc_out_lc.mapped('account_move_id').button_cancel()
@@ -232,12 +235,13 @@ class StockValuationLayerRecompute(models.TransientModel):
                                 ('quantity', '<', 0.001),
                 ]
 
-        svls = list(self.env['stock.valuation.layer'].search(domain).sorted(lambda svl: svl.create_date))
+        svls = self.env['stock.valuation.layer'].search(domain).sorted(lambda svl: svl.create_date)
 
         #delete landed costs for svls out
         svl_loc_out = svls.filtered(lambda svl: svl.quantity < 0)
         self._delete_out_lcs(svl_loc_out)
 
+        svls = list(svls)
         last_avg = avg[0]
         while svls:
             svl = svls[0]
