@@ -181,7 +181,7 @@ class StockValuationLayerRecompute(models.TransientModel):
 
         def _check_diff(new_value, svl):
             if (svl.stock_landed_cost_id or 
-                (svl.stock_valuation_layer_id and svl.l10n_ro_valued_type in ('delivery', 'consumption'))):
+                (svl.stock_valuation_layer_id and svl.l10n_ro_valued_type in ('delivery', 'consumption', 'reception_return'))):
                 return False
                 
             svl_val = svl.value + sum([s.value for s in svl.stock_valuation_layer_ids])
@@ -254,7 +254,7 @@ class StockValuationLayerRecompute(models.TransientModel):
 
         #delete landed costs for svls out
         svl_loc_out = svls.filtered(lambda svl: svl.quantity < 0)
-        #self._delete_out_lcs(svl_loc_out)
+
         svls = list(svls)
         while svls:
             svl = svls[0]
