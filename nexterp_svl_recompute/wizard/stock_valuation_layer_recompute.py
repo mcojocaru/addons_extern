@@ -186,7 +186,7 @@ class StockValuationLayerRecompute(models.TransientModel):
                 
             svl_val = svl.value + sum([s.value for s in svl.stock_valuation_layer_ids])
             diff = abs(round(abs(new_value) - abs(svl_val), 2))
-            if diff > 0.01:
+            if diff > 0.4:
                 return diff
             return False
 
