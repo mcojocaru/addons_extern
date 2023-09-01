@@ -8,9 +8,8 @@ from collections import defaultdict
 
 """
 #
-#'DA.GN3505.25'
-prods = ['BB.LZ.37460011','PA.GN.9017','EA.EVL.2154085','AA.XR.3R94651','GG.SN.18000300070','FE.FO.61401','BA.ES.81197','CI.BS.AA0111','BB.LZ.37440025','GL.CP8566.04','BB.ES.1033315','KC.GN.Q2612A.01','BB.HZ.9045436','CI.SN.73001','PA.RBR.0002','EA.EVL.2104140','AE.GV.70032','PF.SN.8103223','KF.VB.43550','PA.GN2000.06','FE.RA.5000273','AI.RL.89130','PA.SAN.0040','KC.GN.CE285A.01','BF.FO.22303','FH.SN.340101','AC.GN4161.00','BH.ES.56171','GL.UB.5982','FG.RA.21835602','PA.HK.0013','EA.EVL.2154040','GB.FO.51405','PA.GN.0031','AL.SKN.21756','HD.GN.PF025','PA.GN1110.88','HA.ECA5801.99','GL.SN.219012','BK.ES.623916','AE.MO.DLBIH0K00','FG.RA.21835502','EA.EVL.2104125','PA.GN9250.00','EA.EVL.2154075','BA.MO4751.04','BA.ES.81195','PA.GN.0351','PA.FAR.0010','PB.GP.14ABL2','AE.MO.C5BIH0K00','FI.ES.623603','GL.CP2836.02','BF.ES.56043','CE.FO.95222','EA.EVL.4101045','BB.LZ.37420011','BK.ES.623909','PA.GN1310.88','KB.CA.PFI102BK.00','KB.CA.PFI102M.00','KB.CA.PFI102MBK.00','KB.CA.PFI102Y.00','BC.NKI4210.03','EB.EVL.2195830','BB.LZ.30000025','GL.SN.180009000','GL.CP8559S.99','DA.GN2255.31','GJ.OH.02816487','CI.FO.70706','BA.ES.811530','KH.SN.55025001','AL.SKN.26029','EA.EVL.2154058','AA.XR.3R97097','BC.NKI4210.04','GB.SN.18000300007','CB.BS.CA271170','AE.GV.138846','GB.SN.18000300040','AE.MO.TB4BRS0K00','EA.EVL.4110010','AL.SKN.21535','EA.EVL.4105005','PA.GN.0665','CI.FO.70709','KC.GN.CE505X.01','CB.BS.MC070014010','CF.FO.92201','CI.BS.FL032502','KF.VB.43549','FE.FO.61404','GJ.OH.00161052','CC.BS.MA0507170','FA.SN.18000200002','GJ.OH.01861053','AI.MO.89103','CC.BS.MA0307170','PA.GN.0662','PA.GN.0664','PA.GN.0660','BB.MO4112.80','GJ.OH.00161044','CC.BS.MA2707170','GO.SN.18000100010','AA.NAV4801.00','CA.BS.EA2306046','PA.GN.0661','AA.GN3801.00','GL.CP8559.06','GB.SD.00132900','CC.BS.MA1507170']
-
+# BA.NKI4701.03, KC.XR.106R02306.00
+prods = ['AI.MO.89103','AL.SKN.21712','BF.VI.2140T','CF.FO.92150','FH.SN.340101','FH.SN.340102','FH.SN.340103','FL.SN.01800302','GB.CP2225.1002','GF.CP4621.0202','GL.CP2536.01','GL.CP2536.03','GL.CP8559.02','GL.CP8559.13','GL.CP8566.03','GL.CP8566.99','GL.CP8576.01','GL.CP8586.00','GL.SN.219017','GO.SN.18000100010','GO.SN.18000101059','AL.SKN.21708','BF.VI.2140G','BF.VI.2140V','FA.SN.18000200002','FA.SN.18099','GB.CP2225.1003','GL.CP2536.02','GL.CP8566.13','GL.SN.219011','BF.FO.22301','BF.FO.22302','CI.CP.9797','FA.SN.18000200008','GB.SD.023080','GB.SD.073080','GF.CP2631.5151','GL.CP1666.01','GL.CP2846.03','GL.CP8559.01','GL.CP8559.99','GL.CP8566.01','GO.SN.18000100021','HB.CP3649.0002','CI.SN.55020001','FA.SN.18083','GH.CP2156.99','GL.CP2686.00','GL.CP2690.55','GL.CP8559.07','HB.CP7550.30','BF.VI.2140B','GB.SN.18000300007','GO.SN.18000100033','HB.CP7550.12','JA.FO.11001','JA.FO.11002','GB.SD.043080','GB.SD.053080','GL.CP2690.51','BF.FO.22202','GF.CP2631.5111','JA.FO.11017','KH.SN.55025001','BF.FO.22201','FA.SN.18000200004','FA.SN.18032','FL.SN.01800902','GL.CP2637.01','BF.FO.21616','BF.FO.21617','BF.FO.21618','GB.SD.013080','CI.SN.73001','GL.CP2699.00','GB.CP2225.1001','BF.FO.22303','GF.CP2631.5131','GB.SD.003080','GE.FO.51532','FA.SN.18070','GB.SN.18000300038','GF.CP2521.9999','GB.SD.223080','HB.CP7550.92','HB.FO.50406','GG.CP2675.2702','BF.FO.21636','GF.CP2631.5141','FA.SN.18000200061','GB.SD4120.6702','GL.CP2846.01','FA.SN.18036','GN.FO.51202','AI.RL.89112','GF.CP2631.5171','GB.SD.063080','AI.RL.89130','FH.SN.340100','GB.SN.18000300040','HB.CP7550.06','FA.SN.18023','HB.CP7550.24','JA.FO.11003','FN.SN.18526150','KB.EP.T66414A.00','FA.SN.18002','CI.CP9795.99','GL.CP3616.01','AI.RL.89119','BF.FO.22203']
 for prod in prods:
     print(f"PRODUCT={prod}")
     fields = self.env['svl.recompute']._fields
@@ -433,20 +432,22 @@ class StockValuationLayerRecompute(models.TransientModel):
 
 
         domain = ['&',
-                    '&',
-                        ('product_id', '=', product.id),
-                        ('create_date', '>=', date_from),
-                    '|',
+                        ('company_id', '=', self.company_id.id),    
                         '&',
-                            ('description', 'like', 'Product value manually modified'),
-                            ('l10n_ro_valued_type', '=', False),
-                        '|',
                             '&',
-                                ('l10n_ro_location_dest_id', 'in', locations),
-                                ('quantity', '>', 0.001),
-                            '&',
-                                ('l10n_ro_location_id', "in", locations),
-                                ('quantity', '<', 0.001),
+                                ('product_id', '=', product.id),
+                                ('create_date', '>=', date_from),
+                            '|',
+                                '&',
+                                    ('description', 'like', 'Product value manually modified'),
+                                    ('l10n_ro_valued_type', '=', False),
+                                '|',
+                                    '&',
+                                        ('l10n_ro_location_dest_id', 'in', locations),
+                                        ('quantity', '>', 0.001),
+                                    '&',
+                                        ('l10n_ro_location_id', "in", locations),
+                                        ('quantity', '<', 0.001),
                 ]
 
         svls = self.env['stock.valuation.layer'].search(domain).sorted(lambda svl: svl.create_date)
