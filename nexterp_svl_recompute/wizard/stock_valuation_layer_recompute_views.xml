@@ -31,6 +31,8 @@
                 </notebook>
                 <footer>
                     <button name="buttton_do_correction" string="Recompute" type="object" class="btn-primary"/>
+                    <button name="action_check_products" string="Check" type="object" class="btn-primary"/>
+
                     <button string="Cancel" class="btn-secondary" special="cancel" />
                 </footer>
             </form>

@@ -7,16 +7,24 @@ from odoo.tools import float_is_zero
 from collections import defaultdict
 
 """
-fields = self.env['svl.recompute']._fields
-fields = list(fields.keys())
-defaults = self.env['svl.recompute'].default_get(fields)
-defaults.update(recompute_type='fifo_average', date_from='2022-01-01', run_svl_recompute=True, update_svl_values=True, fix_remaining_qty=True, update_account_moves=False)
-wiz = self.env['svl.recompute'].create(defaults)
-#products = self.env['product.product'].search([('type', '=', 'product'), ('id', 'not in', (294, 557, 789)), ('company_id', 'in', (False, 1))])
-#products = self.env['product.product'].search([('type', '=', 'product'), ('categ_id', '=', 37), ('id', 'not in', (294, 557, 789))])
-products = self.env['product.product'].search([('type', '=', 'product'), ('id', '=', 789)])
-wiz.product_ids = [(6, 0, products.ids)]
-wiz.buttton_do_correction()
+#
+#'DA.GN3505.25'
+prods = ['PA.PRX.0011','FJ.FO.41702','GB.SD.013080','BB.LZ.37460025','GL.CP2634.03','AE.GV.80001','AK.FO.41802','KF.VB.43351','EA.EVL.2104132','PA.UV.0005','GB.MA225126.02','KE.EVL.4170005','AA.XR.3R94671','GB.SD.063080','AI.VC.11375','FG.RA.5000283','GL.UB.5104','CJ.CP.9293','BA.ES.624069','HB.CP2589.10','KE.EVL.4160010','EA.EVL.2154080','EA.EVL.2154098','GL.CP8559.99','AA.XR.3R93959','PF.SN.1150101','BA.NKI4501.01','BC.HZ.9486350','JA.CA.WS1210THB','KC.GN.TK1170.01','CA.BS.EA2306045','JA.FO.11001','AL.SKN.21093','GL.SN.219018','FE.RA.5000274','GO.SN.18000101059','AI.MO.89120','EA.EVL.2104126','FE.LZ.55010095','JA.CA.AS2400','EA.EVL.2154055','GL.UB.5401','HB.CP9396.99','FH.SN.340100','KC.GN.CRG719H.01','PA.GN1210.88','GL.UB.4664','BK.GN4015.99','CB.BS.MC040014010','GL.UB.6787','BC.HZ.9486370','FE.LZ.55021054','GO.SN.12000004','AA.XR.3R94661','AL.SKN.21432','BA.ES.11279','GL.CP2896.99','BA.ES.11250','FG.RA.21835601','KH.SN.55050001','PC.LV.0014','PA.SAN.0057','PF.SKN.29002','PA.GN1610.88','DF.GN5020.10','BF.ES.13434','PB.VA.4103E4B','BK.ES.623920','GL.CP8852.47','GL.SN.219019','BF.ES.56057','KB.EP.T66414A.00','PA.GN4202.88','CE.FO.95122','FE.CP.9610','EA.EVL.2104110','BB.LZ.37460011','PA.GN.9017','EA.EVL.2154085','AA.XR.3R94651','GG.SN.18000300070','FE.FO.61401','BA.ES.81197','CI.BS.AA0111']
+#prods = ['BB.LZ.37440025','GL.CP8566.04','BB.ES.1033315','KC.GN.Q2612A.01','GL.SN.219013','BB.HZ.9045436','CI.SN.73001','PA.RBR.0002','EA.EVL.2104140','AE.GV.70032','PF.SN.8103223','KF.VB.43550','PA.GN2000.06','FE.RA.5000273','AI.RL.89130','PA.SAN.0040','KC.GN.CE285A.01','BF.FO.22303','FH.SN.340101','AC.GN4161.00','BH.ES.56171','GL.UB.5982','FG.RA.21835602','PA.HK.0013','EA.EVL.2154040','GB.FO.51405','PA.GN.0031','AL.SKN.21756','HD.GN.PF025','PA.GN1110.88','HA.ECA5801.99','GL.SN.219012','BK.ES.623916','AE.MO.DLBIH0K00','FG.RA.21835502','EA.EVL.2104125','PA.GN9250.00','EA.EVL.2154075','BA.MO4751.04','BA.ES.81195','PA.GN.0351','PA.FAR.0010','PB.GP.14ABL2','AE.MO.C5BIH0K00','FI.ES.623603','GL.CP2836.02','BF.ES.56043','CE.FO.95222','EA.EVL.4101045','BB.LZ.37420011','BK.ES.623909','PA.GN1310.88','KB.CA.PFI102BK.00','KB.CA.PFI102M.00','KB.CA.PFI102MBK.00']
+#prods = ['KB.CA.PFI102Y.00','BC.NKI4210.03','EB.EVL.2195830','BB.LZ.30000025','GL.SN.180009000','GL.CP8559S.99','DA.GN2255.31','GJ.OH.02816487','CI.FO.70706','BA.ES.811530','KH.SN.55025001','AL.SKN.26029','EA.EVL.2154058','AA.XR.3R97097','BC.NKI4210.04','GB.SN.18000300007','CB.BS.CA271170','AE.GV.138846','GB.SN.18000300040','AE.MO.TB4BRS0K00','EA.EVL.4110010','AL.SKN.21535','EA.EVL.4105005','PA.GN.0665','CI.FO.70709','KC.GN.CE505X.01','CB.BS.MC070014010','CF.FO.92201','CI.BS.FL032502','KF.VB.43549','FE.FO.61404','GJ.OH.00161052','CC.BS.MA0507170','FA.SN.18000200002','GJ.OH.01861053','AI.MO.89103','CC.BS.MA0307170','PA.GN.0662','PA.GN.0664','BB.MO4112.80','GJ.OH.00161044','CC.BS.MA2707170','GO.SN.18000100010','AA.NAV4801.00','CA.BS.EA2306046','AA.GN3801.00','GL.CP8559.06','CC.BS.MA1507170']
+for prod in prods:
+    print(f"PRODUCT={prod}")
+    fields = self.env['svl.recompute']._fields
+    fields = list(fields.keys())
+    defaults = self.env['svl.recompute'].default_get(fields)
+    defaults.update(company_id=1, recompute_type='fifo_average', date_from='2023-01-01', run_svl_recompute=True, update_svl_values=True, fix_remaining_qty=True, update_account_moves=True)
+    wiz = self.env['svl.recompute'].create(defaults)
+    products = self.env['product.product'].search([('default_code', '=', prod)])
+    #products = self.env['product.product'].search([('type', '=', 'product'), ('categ_id', '=', 37), ('id', 'not in', (294, 557, 789))])
+    #products = self.env['product.product'].search([('type', '=', 'product'), ('id', '=', 789)])
+    wiz.product_ids = [(6, 0, products.ids)]
+    wiz.buttton_do_correction()
+
 self._cr.commit()
 
 """
@@ -136,6 +144,25 @@ class StockValuationLayerRecompute(models.TransientModel):
 
         return True
 
+
+    def action_check_products(self):
+        if self.product_ids:
+            products = self.product_ids
+        else:
+            products = self.env['product.product'].search([])
+        locations = self.location_ids.mapped('location_id')
+
+        result = []
+        if self.recompute_type == 'fifo_average':
+            for product in products:
+                if product.cost_method == "average":
+                    is_diff, _date, diff = self._check_average(product, locations.ids)
+                    if is_diff:
+                        result.append((product.default_code, _date, diff))
+
+        msg = "\n".join([f"{prod[0]} - {prod[1]} - {prod[2]}" for prod in result])
+        raise UserError(msg)
+
     def _delete_out_lcs(self, svl_loc_out):
         #delete landed costs for svls out
         svl_loc_out_lc = self.env['stock.valuation.layer'].search(
@@ -150,6 +177,194 @@ class StockValuationLayerRecompute(models.TransientModel):
                 (tuple(svl_loc_out_lc.ids),)
             )
             self._cr.execute('delete from stock_valuation_layer where id in %s', (tuple(svl_loc_out_lc.ids),))        
+
+    def _check_average(self, product, locations):
+        self = self.sudo()
+
+        def _check_diff(new_value, svl):
+            if (svl.stock_landed_cost_id or 
+                (svl.stock_valuation_layer_id and svl.l10n_ro_valued_type in ('delivery', 'consumption'))):
+                return False
+                
+            svl_val = svl.value + sum([s.value for s in svl.stock_valuation_layer_ids])
+            diff = abs(round(abs(new_value) - abs(svl_val), 2))
+            if diff > 0.01:
+                return diff
+            return False
+
+        date_from = fields.Datetime.to_datetime(self.date_from)
+        avg = [0, 0]
+        product = product.with_context(to_date=self.date_from)
+        last_svl_before_date = None
+
+        if product.quantity_svl > 0.01:
+            quantity_svl = round(product.quantity_svl, 2)
+            value_svl = max(0, round(product.value_svl, 2))
+            avg = [round(value_svl / quantity_svl, 2), quantity_svl]
+        else:
+            dom = ['&',
+                '&',
+                    ('product_id', '=', product.id),
+                    ('create_date', '<', date_from),
+                '|',
+                        ('l10n_ro_location_dest_id', 'in', locations),
+                        ('l10n_ro_location_id', "in", locations),
+                ]
+
+            value_svl = product.value_svl
+            last_svl_before_date = self.env['stock.valuation.layer'].search(
+                    dom, limit=1, order='create_date desc')            
+            if round(value_svl, 6):
+                if last_svl_before_date:
+                    svl = self.env['stock.valuation.layer'].create({
+                     'company_id': self.company_id.id,
+                     'product_id': product.id,
+                     'create_date': last_svl_before_date.create_date,
+                     'stock_move_id': last_svl_before_date.stock_move_id.id,
+                     'quantity': 0,
+                     'value': -value_svl,
+                     'new_value': -value_svl,
+                     'description': "fix 0 qty value for BEFORE RECOMPUTE DATE",
+                     'l10n_ro_location_id': last_svl_before_date.l10n_ro_location_id.id,
+                     'l10n_ro_location_dest_id': last_svl_before_date.l10n_ro_location_dest_id.id,
+                     'l10n_ro_account_id': last_svl_before_date.l10n_ro_account_id.id
+                    })
+                    self._cr.execute("update stock_valuation_layer set create_date = '%s' where id = %s" % (
+                        last_svl_before_date.create_date, svl.id))
+                    #svl.stock_move_id.with_context(force_period_date=svl.create_date)._account_entry_move(
+                    #    svl.quantity, svl.description, svl.id, svl.value)    
+
+
+        domain = ['&',
+                    '&',
+                        ('product_id', '=', product.id),
+                        ('create_date', '>=', date_from),
+                    '|',
+                        '&',
+                            ('description', 'like', 'Product value manually modified'),
+                            ('l10n_ro_valued_type', '=', False),
+                        '|',
+                            '&',
+                                ('l10n_ro_location_dest_id', 'in', locations),
+                                ('quantity', '>', 0.001),
+                            '&',
+                                ('l10n_ro_location_id', "in", locations),
+                                ('quantity', '<', 0.001),
+                ]
+
+        svls = self.env['stock.valuation.layer'].search(domain).sorted(lambda svl: svl.create_date)
+
+        #delete landed costs for svls out
+        svl_loc_out = svls.filtered(lambda svl: svl.quantity < 0)
+        #self._delete_out_lcs(svl_loc_out)
+        svls = list(svls)
+        while svls:
+            svl = svls[0]
+
+            if not svl.l10n_ro_valued_type and svl.quantity == 0 and avg[1] > 0:
+                #Product value manually modified
+                old_value = avg[0] * avg[1]
+                new_avg = (old_value + svl.value) / (avg[1])
+                avg = [new_avg, avg[1]]
+
+            else:
+                if svl.l10n_ro_valued_type and 'return' in svl.l10n_ro_valued_type:
+                    orig_mv = svl.stock_move_id.move_orig_ids
+                    if orig_mv:
+                        svl_orig = orig_mv.stock_valuation_layer_ids
+                        val = abs(sum([s.value for s in svl_orig]))
+                        qty = sum([s.quantity for s in svl_orig])
+                        if abs(qty) > 0.001 :
+                            new_value = round(svl.quantity * abs(val / qty), 2)
+                            if _check_diff(new_value, svl):
+                                return True, svl.create_date, _check_diff(new_value, svl)
+
+                if (
+                        svl.stock_move_id and
+                        (
+                            svl.stock_move_id._is_in() or
+                            (
+                                svl.stock_move_id._is_internal_transfer()
+                                and
+                                (
+                                    svl.stock_move_id.location_id.company_id !=
+                                    svl.stock_move_id.location_dest_id.company_id
+                                )
+                                and
+                                (
+                                    svl.company_id == svl.l10n_ro_location_dest_id.company_id
+                                )
+                            )
+                        ) or
+                        (
+                            svl.stock_move_id._is_internal_transfer() and
+                            svl.l10n_ro_location_id.scrap_location and
+                            svl.quantity > 0
+                        )
+                    ):
+                    #update average cost
+                    if  svl.quantity > 0:
+                        old_value = avg[0] * avg[1]
+                        #include landed costs and price diffs
+                        svl_val = sum([s.value for s in (svl + svl.stock_valuation_layer_ids)])
+
+                        if (avg[1] + svl.quantity) > 0:
+                            new_avg = (old_value + svl_val) / (avg[1] + svl.quantity)
+                        else:
+                            new_avg = 0
+
+                        avg = [new_avg, avg[1] + svl.quantity]
+
+                elif (
+                        svl.stock_move_id._is_out() or 
+                        (
+                            svl.stock_move_id._is_internal_transfer() and 
+                            svl.l10n_ro_location_dest_id.scrap_location and
+                            svl.quantity < 0
+                        )
+                    ):
+                    svl_qty = abs(svl.quantity)
+                    if  0 >= avg[1] or avg[1] < svl_qty:
+                        #move svl later, after a reception
+                        #return True, svl.create_date
+                        pass
+
+                    else:
+                        if 'return' not in svl.l10n_ro_valued_type:
+                            new_value = round(avg[0] * svl.quantity, 2)
+                            if _check_diff(new_value, svl):
+                                return True, svl.create_date, _check_diff(new_value, svl)
+                        else:
+                            if (avg[1] - abs(svl.quantity)) > 0:
+                                avg[0] = (avg[0] * avg[1] - abs(svl.value)) / (avg[1] - abs(svl.quantity))
+                            else:
+                                avg[0] = 0
+                        avg[1] = max(0, avg[1] - abs(svl.quantity))
+
+                elif svl.stock_move_id._is_internal_transfer() and svl.quantity < 0:
+                    new_value = round(avg[0] * svl.quantity, 2)                      
+                    if _check_diff(new_value, svl):
+                        return True, svl.create_date, _check_diff(new_value, svl)
+                    
+                    if svl.company_id != svl.l10n_ro_location_dest_id.company_id:
+                        svl_qty = abs(svl.quantity)
+                        if avg[1] <= 0 or avg[1] < svl_qty:
+                            should_break = shift_svl0_later(svls)
+                            if should_break:
+                                return True, svl.create_date, False
+
+                        else:
+                            if (avg[1] - abs(svl.quantity)) > 0:
+                                avg[0] = (avg[0] * avg[1] - abs(svl.value)) / (avg[1] - abs(svl.quantity))
+                            else:
+                                avg[0] = 0
+                            avg[1] = max(0, avg[1] - abs(svl.quantity))
+
+
+            svls = svls[1:]
+
+        return False, False, False
+
 
     def _run_average(self, product, locations):
         self = self.sudo()
