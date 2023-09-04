@@ -9,7 +9,7 @@ from collections import defaultdict
 """
 #
 # BA.NKI4701.03, KC.XR.106R02306.00
-prods = ['AI.MO.89103','AL.SKN.21712','BF.VI.2140T','CF.FO.92150','FH.SN.340101','FH.SN.340102','FH.SN.340103','FL.SN.01800302','GB.CP2225.1002','GF.CP4621.0202','GL.CP2536.01','GL.CP2536.03','GL.CP8559.02','GL.CP8559.13','GL.CP8566.03','GL.CP8566.99','GL.CP8576.01','GL.CP8586.00','GL.SN.219017','GO.SN.18000100010','GO.SN.18000101059','AL.SKN.21708','BF.VI.2140G','BF.VI.2140V','FA.SN.18000200002','FA.SN.18099','GB.CP2225.1003','GL.CP2536.02','GL.CP8566.13','GL.SN.219011','BF.FO.22301','BF.FO.22302','CI.CP.9797','FA.SN.18000200008','GB.SD.023080','GB.SD.073080','GF.CP2631.5151','GL.CP1666.01','GL.CP2846.03','GL.CP8559.01','GL.CP8559.99','GL.CP8566.01','GO.SN.18000100021','HB.CP3649.0002','CI.SN.55020001','FA.SN.18083','GH.CP2156.99','GL.CP2686.00','GL.CP2690.55','GL.CP8559.07','HB.CP7550.30','BF.VI.2140B','GB.SN.18000300007','GO.SN.18000100033','HB.CP7550.12','JA.FO.11001','JA.FO.11002','GB.SD.043080','GB.SD.053080','GL.CP2690.51','BF.FO.22202','GF.CP2631.5111','JA.FO.11017','KH.SN.55025001','BF.FO.22201','FA.SN.18000200004','FA.SN.18032','FL.SN.01800902','GL.CP2637.01','BF.FO.21616','BF.FO.21617','BF.FO.21618','GB.SD.013080','CI.SN.73001','GL.CP2699.00','GB.CP2225.1001','BF.FO.22303','GF.CP2631.5131','GB.SD.003080','GE.FO.51532','FA.SN.18070','GB.SN.18000300038','GF.CP2521.9999','GB.SD.223080','HB.CP7550.92','HB.FO.50406','GG.CP2675.2702','BF.FO.21636','GF.CP2631.5141','FA.SN.18000200061','GB.SD4120.6702','GL.CP2846.01','FA.SN.18036','GN.FO.51202','AI.RL.89112','GF.CP2631.5171','GB.SD.063080','AI.RL.89130','FH.SN.340100','GB.SN.18000300040','HB.CP7550.06','FA.SN.18023','HB.CP7550.24','JA.FO.11003','FN.SN.18526150','KB.EP.T66414A.00','FA.SN.18002','CI.CP9795.99','GL.CP3616.01','AI.RL.89119','BF.FO.22203']
+prods = ['BF.FO.22302','BF.FO.21636','GF.CP2521.9999','GB.CP2225.1002','FA.SN.18099','GL.CP8566.99','GL.SD.113001','GL.CP8559.02','GL.CP8566.11','BF.VI.2140V','GL.CP2536.01','BF.FO.22303','FA.SN.18070','GB.SD.063080','FL.SN.01800902','GB.SN.18000300038','GL.CP2846.03','FH.SN.340101','GL.CP2699.00','GL.CP8559.22','GA.FO.50803','GB.SD.132002','HB.CP7550.92','CJ.CP0002.02','FA.SN.18000200004','GB.SD.023080','GO.SN.18000100021','CB.BS.MC070014010','HB.CP7550.24','CF.FO.93234','GF.CP2631.5131','HB.CP7550.30','GL.CP1666.01','GL.CP8559.99','GL.CP2507.99','GL.CP8566.04','FA.SN.18000200008','KH.SN.55025001','FA.SN.18000200002','GL.CP8559.03','CI.CP.9797','GL.CP2686.00','FH.SN.340105','GB.CP2225.1003','HB.CP3649.0002','GF.CP2631.5141','BF.VI.2140G','FA.SN.18032','BF.FO.22301','BF.FO.22203','GL.CP3616.01','AI.RL.89119','BF.VI.2140T','GL.CP2846.01','GB.FO.51517','BF.FO.22201','GB.SN.18000300037','GB.SD.053080','GF.CP2631.5151','GF.CP2631.5171','FN.SN.18526150','GB.SD4120.6702','GL.CP8586.00','FH.SN.340100','GB.SD.073080','BF.FO.22202','CI.CP9795.99','FA.SN.18083','GL.CP8559.01','GH.CP2156.99','GL.CP2637.01','GB.SD.003080','GL.CP8559.06','GF.CP2631.5111','AI.RL.89100','CI.BS.AA0111','CF.FO.92150','GB.SD.223080','GB.SD.033080','GL.CP8566.01','GO.SN.18000101059','GG.CP2675.2702']
 for prod in prods:
     print(f"PRODUCT={prod}")
     fields = self.env['svl.recompute']._fields
@@ -22,7 +22,6 @@ for prod in prods:
     #products = self.env['product.product'].search([('type', '=', 'product'), ('id', '=', 789)])
     wiz.product_ids = [(6, 0, products.ids)]
     wiz.buttton_do_correction()
-
 self._cr.commit()
 
 """
@@ -460,7 +459,6 @@ class StockValuationLayerRecompute(models.TransientModel):
         last_avg = avg[0]
         while svls:
             svl = svls[0]
-
             if not svl.l10n_ro_valued_type and svl.quantity == 0 and avg[1] > 0:
                 #Product value manually modified
                 old_value = avg[0] * avg[1]
@@ -846,9 +844,8 @@ class StockValuationLayerRecompute(models.TransientModel):
                                         )
                 else:
                     if (svl.quantity < 0 or ('return' in svl.l10n_ro_valued_type) or svl.l10n_ro_valued_type == 'production'):
-
                         svl = svl.sudo()
-                        if svl.account_move_id:
+                        if svl.account_move_id and svl.account_move_id.amount_total != 0.0:
                             if round(abs(svl.value) - abs(svl.account_move_id.amount_total), 5) != 0:
                                 svl.account_move_id._check_fiscalyear_lock_date()
                                 svl.account_move_id.button_draft()
@@ -865,6 +862,10 @@ class StockValuationLayerRecompute(models.TransientModel):
 
                                 svl.account_move_id.with_context(force_period_date=svl.create_date).action_post()
                         else:
+                            if svl.account_move_id and svl.account_move_id.amount_total == 0:
+                                svl.account_move_id.button_draft()
+                                svl.account_move_id.button_cancel()
+
                             if svl.value != 0:
                                 svl.stock_move_id.with_context(force_period_date=svl.create_date)._account_entry_move(
                                     svl.quantity, svl.description, svl.id, svl.value
