@@ -10,11 +10,11 @@ from collections import defaultdict
 fields = self.env['svl.recompute']._fields
 fields = list(fields.keys())
 defaults = self.env['svl.recompute'].default_get(fields)
-defaults.update(recompute_type='fifo_average', date_from='2022-01-01', run_svl_recompute=True, update_svl_values=True, fix_remaining_qty=True, update_account_moves=False)
+defaults.update(recompute_type='fifo_average', date_from='2022-12-01', run_svl_recompute=True, update_svl_values=True, fix_remaining_qty=True, update_account_moves=False)
 wiz = self.env['svl.recompute'].create(defaults)
 #products = self.env['product.product'].search([('type', '=', 'product'), ('id', 'not in', (294, 557, 789)), ('company_id', 'in', (False, 1))])
 #products = self.env['product.product'].search([('type', '=', 'product'), ('categ_id', '=', 37), ('id', 'not in', (294, 557, 789))])
-products = self.env['product.product'].search([('type', '=', 'product'), ('id', '=', 789)])
+products = self.env['product.product'].search([('type', '=', 'product'), ('categ_id', '=', 16)])
 wiz.product_ids = [(6, 0, products.ids)]
 wiz.buttton_do_correction()
 self._cr.commit()
@@ -362,6 +362,7 @@ class StockValuationLayerRecompute(models.TransientModel):
         product.sudo().with_company(self.env.company).with_context(disable_auto_svl=True).standard_price = last_avg
 
     def _run_fifo(self, product, loc):
+        print(f"PRODUCT={product}")
         date_from = fields.Datetime.to_datetime(self.date_from)
         date_domain = [('create_date', '>=', date_from)]
 
@@ -395,8 +396,8 @@ class StockValuationLayerRecompute(models.TransientModel):
                     fifo_lst.append([t_qty, unit_cost, value, svl_in.stock_move_id, svl_in])
                     break
             # assign unit cost to delivery svls based on fifo_lst
-            print(svl_loc_out)
-            print(fifo_lst)
+            #print(svl_loc_out)
+            #print(fifo_lst)
 
             if fifo_lst:
                 last_price = fifo_lst[0][1]
