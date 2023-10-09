@@ -7,15 +7,32 @@ from odoo.tools import float_is_zero
 from collections import defaultdict
 
 """
+#products = self.env['product.product'].search([('type', '=', 'product'), ('id', 'not in', (294, 557, 789)), ('company_id', 'in', (False, 1))])
+#products = self.env['product.product'].search([('type', '=', 'product'), ('categ_id', '=', 37), ('id', 'not in', (294, 557, 789))])
+
+#product_ids = [903,902,574,576,267,933,410, 523, 960, 959, 819, 1119, 818, 839,522,789,614,582,1366,748,1218,198,552,496,477,634,1201,223,225,533,404] 
+#products = self.env['product.product'].search([('id', 'in', product_ids)])
+
 fields = self.env['svl.recompute']._fields
 fields = list(fields.keys())
 defaults = self.env['svl.recompute'].default_get(fields)
-defaults.update(recompute_type='fifo_average', date_from='2022-12-01', run_svl_recompute=True, update_svl_values=True, fix_remaining_qty=True, update_account_moves=False)
+defaults.update(
+    company_id=1, 
+    recompute_type='fifo_average', date_from='2022-12-01', 
+    run_svl_recompute=True, update_svl_values=True, 
+    fix_remaining_qty=True, 
+    update_account_moves=False
+)
 wiz = self.env['svl.recompute'].create(defaults)
-#products = self.env['product.product'].search([('type', '=', 'product'), ('id', 'not in', (294, 557, 789)), ('company_id', 'in', (False, 1))])
-#products = self.env['product.product'].search([('type', '=', 'product'), ('categ_id', '=', 37), ('id', 'not in', (294, 557, 789))])
-products = self.env['product.product'].search([('type', '=', 'product'), ('categ_id', '=', 16)])
+products = self.env['product.product'].search(
+     [('type', '=', 'product'), 
+     ('categ_id', '=', 34), 
+     ('id', '!=', 557)
+     ])
 wiz.product_ids = [(6, 0, products.ids)]
+locs = wiz.location_ids.filtered(lambda l: l.location_id.id == 8)
+wiz.location_ids = [(6, 0, locs.ids)]
+
 wiz.buttton_do_correction()
 self._cr.commit()
 
@@ -376,7 +393,7 @@ class StockValuationLayerRecompute(models.TransientModel):
         svl_loc_out = svl_loc_out.sorted(lambda svl: svl.create_date)
 
         #delete landed costs for svls out
-        self._delete_out_lcs(svl_loc_out)
+        #self._delete_out_lcs(svl_loc_out)
 
         should_restart_fifo = True
         while should_restart_fifo:
@@ -424,7 +441,10 @@ class StockValuationLayerRecompute(models.TransientModel):
                             if svl_qty <= fifo_qty:
                                 last_price = fifo_lst[0][1]
                                 svl_out.unit_cost = last_price
-                                svl_out.value = (-1) * svl_qty * last_price
+
+                                link_value = sum([s.value for s in svl_out.stock_valuation_layer_ids])
+                                svl_out.value = (-1) * svl_qty * last_price - link_value                                
+
                                 fifo_lst[0][0] = fifo_qty - svl_qty
                                 if fifo_lst[0][0] == 0:
                                     fifo_lst.pop(0)
@@ -444,7 +464,11 @@ class StockValuationLayerRecompute(models.TransientModel):
                                             break
                                     else:
                                         break
-                                svl_out.value =(-1) * value
+                                
+                                link_value = sum([s.value for s in svl_out.stock_valuation_layer_ids])
+                                value -= link_value
+                                svl_out.value = (-1) * value
+                                
                                 svl_out.unit_cost = (-1) * value / svl_out.quantity
                         # check for delivery_return in fifo_lst to have the correct value and unit_price
                         if svl_out.stock_move_id.move_dest_ids and svl_out.stock_move_id.move_dest_ids[0].state == 'done':
@@ -532,43 +556,55 @@ class StockValuationLayerRecompute(models.TransientModel):
             products = self.env['product.product'].search([])
 
         locations = self.location_ids.mapped('location_id')
-        if len(products) == 1:
-            self._cr.execute("""update stock_valuation_layer set remaining_qty = 0, remaining_value = 0 where product_id = %s""", (products.id,))
-        elif products:
-            self._cr.execute("""update stock_valuation_layer set remaining_qty = 0, remaining_value = 0 where product_id in %s""", (tuple(products.ids),))
-        self.env.cr.commit()        
+        if self.update_svl_values:
+            if len(products) == 1:
+                self._cr.execute("""update stock_valuation_layer set remaining_qty = 0, remaining_value = 0 where product_id = %s""", (products.id,))
+            elif products:
+                self._cr.execute("""update stock_valuation_layer set remaining_qty = 0, remaining_value = 0 where product_id in %s""", (tuple(products.ids),))
+            self.env.cr.commit()
+        else:
+            svls = self.env['stock.valuation.layer'].search([('product_id', 'in', products.ids)])
+            svls.write({'remaining_qty': 0, 'remaining_value': 0})
 
         # Fix remaining qty
-        for location in locations.filtered(lambda l: l.usage == 'internal'):
-            plds = self.env['stock.quant'].read_group(
-                        domain=[('product_id', 'in', products.ids), ('location_id', '=', location.id)],
-                        fields=['product_id', 'quantity:sum'],
-                        groupby=['product_id', 'location_id']
-                    )
+        for location in locations.filtered(lambda l: l._should_be_valued()):
+            self._cr.execute("""
+                select product_id, location_id, lot_id, sum(quantity) as quantity 
+                from stock_quant where location_id= %s
+                group by product_id, location_id, lot_id;
+            """ % location.id)                        
+            plds = self._cr.dictfetchall()
 
             for pld in plds:
-                product = self.env['product.product'].browse(pld['product_id'][0])            
+                product = self.env['product.product'].browse(pld['product_id'])  
+                lot_id = self.env['stock.production.lot'].browse(pld['lot_id'])
                 qty = pld['quantity']
-                svls = self.env['stock.valuation.layer'].search(
-                    [("product_id", "=", product.id),
-                        ("l10n_ro_location_dest_id", "=", location.id),
-                        ("quantity", ">", 0)])
-                qty = pld['quantity']
+                sign = 1
+                if qty >= 0:
+                    domain_svls = [("product_id", "=", product.id), ("l10n_ro_location_dest_id", "=", location.id), ("quantity", ">", 0)]
+                else:
+                    sign = -1
+                    domain_svls = [("product_id", "=", product.id), ("l10n_ro_location_id", "=", location.id), ("quantity", "<", 0)]
+
+                if lot_id:
+                    domain_svls.append(("lot_ids", "in", lot_id.ids))
+
+                svls = self.env['stock.valuation.layer'].search(domain_svls)
                 for svl in svls.sorted("create_date", reverse=True):
                     unit_cost = svl.value / svl.quantity if svl.quantity else 0
                     unit_cost = unit_cost or product.with_company(self.company_id).standard_price                        
-                    if qty > 0:
+                    if qty * sign > 0:
                         added_cost = 0
                         linked_svl = self.env['stock.valuation.layer'].search([('stock_valuation_layer_id', '=', svl.id)])
                         if linked_svl:
                             added_cost = sum(linked_svl.mapped('value'))
-                        if svl.quantity <= qty:
+                        if abs(svl.quantity) <= qty * sign:
                             svl.remaining_qty = svl.quantity
-                            svl.remaining_value = svl.quantity * unit_cost + added_cost
-                            qty -= svl.quantity
+                            svl.remaining_value = svl.quantity * unit_cost
+                            qty = (abs(qty) - abs(svl.quantity)) * sign
                         else:
-                            svl.remaining_qty = qty
-                            svl.remaining_value = qty * unit_cost + (qty/svl.quantity)*added_cost
+                            svl.remaining_qty = abs(qty) * sign
+                            svl.remaining_value = sign * abs(qty) * unit_cost
                             qty = 0
         
                     if not svl.unit_cost:
