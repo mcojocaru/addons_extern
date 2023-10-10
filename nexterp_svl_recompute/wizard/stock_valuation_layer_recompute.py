@@ -8,34 +8,39 @@ from collections import defaultdict
 
 """
 #products = self.env['product.product'].search([('type', '=', 'product'), ('id', 'not in', (294, 557, 789)), ('company_id', 'in', (False, 1))])
-#products = self.env['product.product'].search([('type', '=', 'product'), ('categ_id', '=', 37), ('id', 'not in', (294, 557, 789))])
-
 #product_ids = [903,902,574,576,267,933,410, 523, 960, 959, 819, 1119, 818, 839,522,789,614,582,1366,748,1218,198,552,496,477,634,1201,223,225,533,404] 
 #products = self.env['product.product'].search([('id', 'in', product_ids)])
 
-fields = self.env['svl.recompute']._fields
-fields = list(fields.keys())
-defaults = self.env['svl.recompute'].default_get(fields)
-defaults.update(
-    company_id=1, 
-    recompute_type='fifo_average', date_from='2022-12-01', 
-    run_svl_recompute=True, update_svl_values=True, 
-    fix_remaining_qty=True, 
-    update_account_moves=False
-)
-wiz = self.env['svl.recompute'].create(defaults)
-products = self.env['product.product'].search(
-     [('type', '=', 'product'), 
-     ('categ_id', '=', 34), 
-     ('id', '!=', 557)
-     ])
-wiz.product_ids = [(6, 0, products.ids)]
-locs = wiz.location_ids.filtered(lambda l: l.location_id.id == 8)
-wiz.location_ids = [(6, 0, locs.ids)]
+32, 35, 31,33,66,38,15,16,36,39,44,28,34,5,17
 
-wiz.buttton_do_correction()
-self._cr.commit()
-
+company = 1
+products = self.env['product.product'].search([
+    ('detailed_type', '=', 'product'), 
+    ('categ_id', 'child_of', 17),
+    '|',
+        ('company_id', '=', False),
+        ('company_id', '=', company)
+])
+if products:
+    fields = self.env['svl.recompute']._fields
+    fields = list(fields.keys())
+    defaults = self.env['svl.recompute'].default_get(fields)
+    defaults.update(
+        company_id=company, 
+        #recompute_type='manufacturing', 
+        recompute_type='fifo_average', 
+        date_from='2022-12-01', 
+        run_svl_recompute=True, 
+        fix_remaining_qty=True, 
+        update_svl_values=True,     
+        update_account_moves=False
+    )
+    wiz = self.env['svl.recompute'].create(defaults)
+    wiz.product_ids = [(6, 0, products.ids)]
+    locs = wiz.location_ids.filtered(lambda l: l.location_id.id == 8)
+    wiz.location_ids = [(6, 0, locs.ids)]
+    wiz.buttton_do_correction()
+    self._cr.commit()
 """
 class SVLRecomputeLocation(models.TransientModel):
     _name = 'svl.recompute.location'
@@ -443,7 +448,7 @@ class StockValuationLayerRecompute(models.TransientModel):
                                 svl_out.unit_cost = last_price
 
                                 link_value = sum([s.value for s in svl_out.stock_valuation_layer_ids])
-                                svl_out.value = (-1) * svl_qty * last_price - link_value                                
+                                svl_out.value = (-1) * svl_qty * last_price + link_value                                
 
                                 fifo_lst[0][0] = fifo_qty - svl_qty
                                 if fifo_lst[0][0] == 0:
