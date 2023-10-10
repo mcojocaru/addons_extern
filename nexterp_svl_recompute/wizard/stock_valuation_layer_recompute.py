@@ -448,7 +448,7 @@ class StockValuationLayerRecompute(models.TransientModel):
                                 svl_out.unit_cost = last_price
 
                                 link_value = sum([s.value for s in svl_out.stock_valuation_layer_ids])
-                                svl_out.value = (-1) * svl_qty * last_price + link_value                                
+                                svl_out.value = (-1) * (svl_qty * last_price - link_value)
 
                                 fifo_lst[0][0] = fifo_qty - svl_qty
                                 if fifo_lst[0][0] == 0:
