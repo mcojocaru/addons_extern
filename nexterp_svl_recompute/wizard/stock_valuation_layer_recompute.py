@@ -591,13 +591,16 @@ class StockValuationLayerRecompute(models.TransientModel):
 
                 svls = self.env['stock.valuation.layer'].search(domain_svls)
                 for svl in svls.sorted("create_date", reverse=True):
-                    unit_cost = svl.value / svl.quantity if svl.quantity else 0
+                    added_cost = 0
+                    linked_svl = self.env['stock.valuation.layer'].search([('stock_valuation_layer_id', '=', svl.id)])
+                    if linked_svl:
+                        added_cost = sum(linked_svl.mapped('value'))
+
+                    svl_value = svl.value + added_cost
+
+                    unit_cost = svl_value / svl.quantity if svl.quantity else 0
                     unit_cost = unit_cost or product.with_company(self.company_id).standard_price                        
                     if qty * sign > 0:
-                        added_cost = 0
-                        linked_svl = self.env['stock.valuation.layer'].search([('stock_valuation_layer_id', '=', svl.id)])
-                        if linked_svl:
-                            added_cost = sum(linked_svl.mapped('value'))
                         if abs(svl.quantity) <= qty * sign:
                             svl.remaining_qty = svl.quantity
                             svl.remaining_value = svl.quantity * unit_cost
