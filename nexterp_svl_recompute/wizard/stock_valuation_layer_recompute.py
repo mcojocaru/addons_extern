@@ -428,7 +428,7 @@ class StockValuationLayerRecompute(models.TransientModel):
             # assign unit cost to delivery svls based on fifo_lst
             #print(svl_loc_out)
             #print(fifo_lst)
-            print("restarted")
+            _logger.info("restarted")
             if fifo_lst:
                 last_price = fifo_lst[0][1]
                 for svl_out in svl_loc_out:
