@@ -5,6 +5,9 @@ from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 from odoo.tools import float_is_zero
 from collections import defaultdict
+import logging
+_logger = logging.getLogger(__name__)
+
 
 """
 #products = self.env['product.product'].search([('type', '=', 'product'), ('id', 'not in', (294, 557, 789)), ('company_id', 'in', (False, 1))])
@@ -17,6 +20,7 @@ company = 1
 products = self.env['product.product'].search([
     ('detailed_type', '=', 'product'), 
     ('categ_id', 'child_of', 17),
+    ('id', 'not in', (582, 773, 199)),    
     '|',
         ('company_id', '=', False),
         ('company_id', '=', company)
@@ -384,11 +388,15 @@ class StockValuationLayerRecompute(models.TransientModel):
         product.sudo().with_company(self.env.company).with_context(disable_auto_svl=True).standard_price = last_avg
 
     def _run_fifo(self, product, loc):
-        print(f"PRODUCT={product}")
+        _logger.info(f"PRODUCT={product}")
         date_from = fields.Datetime.to_datetime(self.date_from)
         date_domain = [('create_date', '>=', date_from)]
 
-        domain_in = date_domain + [('product_id', '=', product.id), ("l10n_ro_location_dest_id", "=", loc.id), ('quantity', '>', 0.001)]
+        domain_in = date_domain + [
+                                    ('product_id', '=', product.id), 
+                                    ("l10n_ro_location_dest_id", "=", loc.id), 
+                                    ('quantity', '>', 0.001)
+                                ]
         svl_loc_in = self.env['stock.valuation.layer'].search(domain_in)
 
         domain_out = date_domain + [('product_id', '=', product.id), ("l10n_ro_location_id", "=", loc.id), ('quantity', '<', 0)]
@@ -420,7 +428,7 @@ class StockValuationLayerRecompute(models.TransientModel):
             # assign unit cost to delivery svls based on fifo_lst
             #print(svl_loc_out)
             #print(fifo_lst)
-
+            print("restarted")
             if fifo_lst:
                 last_price = fifo_lst[0][1]
                 for svl_out in svl_loc_out:
@@ -448,7 +456,10 @@ class StockValuationLayerRecompute(models.TransientModel):
                                 svl_out.unit_cost = last_price
 
                                 link_value = sum([s.value for s in svl_out.stock_valuation_layer_ids])
-                                svl_out.value = (-1) * (svl_qty * last_price - link_value)
+                                if link_value < 0:
+                                    svl_out.value = (-1) * (svl_qty * last_price - abs(link_value))
+                                else:
+                                    svl_out.value = (-1) * (svl_qty * last_price + link_value)
 
                                 fifo_lst[0][0] = fifo_qty - svl_qty
                                 if fifo_lst[0][0] == 0:
@@ -471,10 +482,15 @@ class StockValuationLayerRecompute(models.TransientModel):
                                         break
                                 
                                 link_value = sum([s.value for s in svl_out.stock_valuation_layer_ids])
-                                value -= link_value
+                                if link_value < 0:
+                                    value -= abs(link_value)
+                                else:
+                                    value += link_value
+
                                 svl_out.value = (-1) * value
                                 
                                 svl_out.unit_cost = (-1) * value / svl_out.quantity
+
                         # check for delivery_return in fifo_lst to have the correct value and unit_price
                         if svl_out.stock_move_id.move_dest_ids and svl_out.stock_move_id.move_dest_ids[0].state == 'done':
                             should_restart_fifo = True
@@ -482,7 +498,15 @@ class StockValuationLayerRecompute(models.TransientModel):
                                 fifo_entry = fifo_lst[i]
                                 if fifo_entry[3] in svl_out.stock_move_id.move_dest_ids:
                                     # fix new unit_price in fifo
-                                    svl_out_uc = abs(svl_out.value / svl_out.quantity)
+
+                                    svl_out_val = svl_out.value
+                                    link_value = sum([s.value for s in svl_out.stock_valuation_layer_ids])
+                                    if link_value < 0:
+                                        svl_out_val = (-1) * (svl_qty * last_price - abs(link_value))
+                                    else:
+                                        svl_out_val = (-1) * (svl_qty * last_price + link_value)
+                                    svl_out_uc = abs(svl_out_val / svl_out.quantity)
+
                                     if svl_out_uc != fifo_entry[1]:
                                         # fix reception_return unit_cost and value
                                         fifo_entry[1] = fifo_entry[4].unit_cost = svl_out_uc
@@ -573,11 +597,21 @@ class StockValuationLayerRecompute(models.TransientModel):
 
         # Fix remaining qty
         for location in locations.filtered(lambda l: l._should_be_valued()):
-            self._cr.execute("""
-                select product_id, location_id, lot_id, sum(quantity) as quantity 
-                from stock_quant where location_id= %s
-                group by product_id, location_id, lot_id;
-            """ % location.id)                        
+            if len(products) == 1:
+                self._cr.execute("""
+                    select product_id, location_id, lot_id, sum(quantity) as quantity 
+                    from stock_quant 
+                    where location_id = %s and product_id = %s
+                    group by product_id, location_id, lot_id;
+                """ % (location.id, products.id))                        
+            else:
+                self._cr.execute("""
+                    select product_id, location_id, lot_id, sum(quantity) as quantity 
+                    from stock_quant 
+                    where location_id = %s and product_id in %s
+                    group by product_id, location_id, lot_id;
+                """ % (location.id, tuple(products.ids)))                        
+
             plds = self._cr.dictfetchall()
 
             for pld in plds:
@@ -594,13 +628,20 @@ class StockValuationLayerRecompute(models.TransientModel):
                 if lot_id:
                     domain_svls.append(("lot_ids", "in", lot_id.ids))
 
-                svls = self.env['stock.valuation.layer'].search(domain_svls)
-                for svl in svls.sorted("create_date", reverse=True):
-                    added_cost = 0
-                    linked_svl = self.env['stock.valuation.layer'].search([('stock_valuation_layer_id', '=', svl.id)])
-                    if linked_svl:
-                        added_cost = sum(linked_svl.mapped('value'))
+                svls = self.env['stock.valuation.layer'].search(domain_svls, order="create_date desc")
 
+                #check if it is a delivery return, fix value
+                for svl in svls.filtered(lambda s: s.stock_move_id.origin_returned_move_id):
+                    svl_origin = svl.stock_move_id.origin_returned_move_id.stock_valuation_layer_ids
+                    if svl_origin:
+                        origin_value = sum([s.value for s in svl_origin])
+                        origin_qty = sum([s.quantity for s in svl_origin])
+                        unit_cost = origin_value / origin_qty
+                        svl.value = svl.quantity * unit_cost
+                        svl.unit_cost = unit_cost
+
+                for svl in svls.sorted("create_date", reverse=True):
+                    added_cost = sum([s.value for s in svl.stock_valuation_layer_ids])
                     svl_value = svl.value + added_cost
 
                     unit_cost = svl_value / svl.quantity if svl.quantity else 0
