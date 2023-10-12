@@ -128,7 +128,8 @@ class StockValuationLayerRecompute(models.TransientModel):
             products = self.env['product.product'].search([])
 
         locations = self.location_ids.mapped('location_id')
-        domain = ['&',
+        domain = [
+                    ('company_id', '=', self.company_id.id),
                     ('product_id', 'in', products.ids),
                     '|',
                         ('l10n_ro_location_dest_id', 'in', locations.ids),
@@ -391,15 +392,27 @@ class StockValuationLayerRecompute(models.TransientModel):
         _logger.info(f"PRODUCT={product}")
         date_from = fields.Datetime.to_datetime(self.date_from)
         date_domain = [('create_date', '>=', date_from)]
+        domain_company = [('company_id', '=', self.company_id.id)]
 
-        domain_in = date_domain + [
-                                    ('product_id', '=', product.id), 
-                                    ("l10n_ro_location_dest_id", "=", loc.id), 
-                                    ('quantity', '>', 0.001)
-                                ]
+
+        domain_in = (
+            domain_company + date_domain + 
+            [
+                ('product_id', '=', product.id), 
+                ("l10n_ro_location_dest_id", "=", loc.id), 
+                ('quantity', '>', 0.001)
+            ]
+        )
         svl_loc_in = self.env['stock.valuation.layer'].search(domain_in)
 
-        domain_out = date_domain + [('product_id', '=', product.id), ("l10n_ro_location_id", "=", loc.id), ('quantity', '<', 0)]
+        domain_out = (
+            domain_company + date_domain + 
+            [
+                ('product_id', '=', product.id), 
+                ("l10n_ro_location_id", "=", loc.id), 
+                ('quantity', '<', 0)
+            ]
+        )
         svl_loc_out = self.env['stock.valuation.layer'].search(domain_out)
 
         svl_loc_in = svl_loc_in.sorted(lambda svl: svl.create_date)
@@ -587,12 +600,12 @@ class StockValuationLayerRecompute(models.TransientModel):
         locations = self.location_ids.mapped('location_id')
         if self.update_svl_values:
             if len(products) == 1:
-                self._cr.execute("""update stock_valuation_layer set remaining_qty = 0, remaining_value = 0 where product_id = %s""", (products.id,))
+                self._cr.execute("""update stock_valuation_layer set remaining_qty = 0, remaining_value = 0 where product_id = %s and company_id = %s""", (products.id, self.company_id.id))
             elif products:
-                self._cr.execute("""update stock_valuation_layer set remaining_qty = 0, remaining_value = 0 where product_id in %s""", (tuple(products.ids),))
+                self._cr.execute("""update stock_valuation_layer set remaining_qty = 0, remaining_value = 0 where product_id in %s and company_id = %s""", (tuple(products.ids), self.company_id.id))
             self.env.cr.commit()
         else:
-            svls = self.env['stock.valuation.layer'].search([('product_id', 'in', products.ids)])
+            svls = self.env['stock.valuation.layer'].search([('product_id', 'in', products.ids), ('company_id', '=', self.company_id.id)])
             svls.write({'remaining_qty': 0, 'remaining_value': 0})
 
         # Fix remaining qty
@@ -601,16 +614,16 @@ class StockValuationLayerRecompute(models.TransientModel):
                 self._cr.execute("""
                     select product_id, location_id, lot_id, sum(quantity) as quantity 
                     from stock_quant 
-                    where location_id = %s and product_id = %s
+                    where location_id = %s and product_id = %s and company_id = %s
                     group by product_id, location_id, lot_id;
-                """ % (location.id, products.id))                        
+                """ % (location.id, products.id, self.company_id.id))                        
             else:
                 self._cr.execute("""
                     select product_id, location_id, lot_id, sum(quantity) as quantity 
                     from stock_quant 
-                    where location_id = %s and product_id in %s
+                    where location_id = %s and product_id in %s and company_id = %s
                     group by product_id, location_id, lot_id;
-                """ % (location.id, tuple(products.ids)))                        
+                """ % (location.id, tuple(products.ids), self.company_id.id))                        
 
             plds = self._cr.dictfetchall()
 
@@ -628,7 +641,10 @@ class StockValuationLayerRecompute(models.TransientModel):
                 if lot_id:
                     domain_svls.append(("lot_ids", "in", lot_id.ids))
 
-                svls = self.env['stock.valuation.layer'].search(domain_svls, order="create_date desc")
+                domain_svls.append(('company_id', '=', self.company_id.id))
+
+                svls = self.env['stock.valuation.layer'].search(domain_svls)
+                svls = svls.sorted(lambda svl: svl.create_date)
 
                 #check if it is a delivery return, fix value
                 for svl in svls.filtered(lambda s: s.stock_move_id.origin_returned_move_id):
