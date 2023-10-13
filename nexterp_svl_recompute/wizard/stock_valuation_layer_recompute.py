@@ -120,10 +120,10 @@ class StockValuationLayerRecompute(models.TransientModel):
                 ('product_id', 'in', self.product_ids.ids),
                 ('company_id', '=', self.company_id.id)
             ])
-            locs = svls.mapped('l10n_ro_location_id') + svls.mapped('l10n_ro_location_dest_id')
-            locs = locs.filtered(lambda l: l._should_be_valued())
-            wiz_locs = self.location_ids.filtered(lambda l: l.location_id in locs)
-            self.location_ids = [(6, 0, wiz_locs.ids)]
+            locs = set(svls.mapped('l10n_ro_location_id') + svls.mapped('l10n_ro_location_dest_id'))
+            locs = list(filter(lambda l: l._should_be_valued(), locs))
+            wiz_locs = list(filter(lambda l: l.location_id in locs, self.location_ids))
+            self.location_ids = [(6, 0, [l.id for l in wiz_locs])]
 
 
     def buttton_do_correction(self):
