@@ -8,14 +8,13 @@ from collections import defaultdict
 
 """
 #
-# BA.NKI4701.03, KC.XR.106R02306.00
-prods = ['BF.FO.22302','BF.FO.21636','GF.CP2521.9999','GB.CP2225.1002','FA.SN.18099','GL.CP8566.99','GL.SD.113001','GL.CP8559.02','GL.CP8566.11','BF.VI.2140V','GL.CP2536.01','BF.FO.22303','FA.SN.18070','GB.SD.063080','FL.SN.01800902','GB.SN.18000300038','GL.CP2846.03','FH.SN.340101','GL.CP2699.00','GL.CP8559.22','GA.FO.50803','GB.SD.132002','HB.CP7550.92','CJ.CP0002.02','FA.SN.18000200004','GB.SD.023080','GO.SN.18000100021','CB.BS.MC070014010','HB.CP7550.24','CF.FO.93234','GF.CP2631.5131','HB.CP7550.30','GL.CP1666.01','GL.CP8559.99','GL.CP2507.99','GL.CP8566.04','FA.SN.18000200008','KH.SN.55025001','FA.SN.18000200002','GL.CP8559.03','CI.CP.9797','GL.CP2686.00','FH.SN.340105','GB.CP2225.1003','HB.CP3649.0002','GF.CP2631.5141','BF.VI.2140G','FA.SN.18032','BF.FO.22301','BF.FO.22203','GL.CP3616.01','AI.RL.89119','BF.VI.2140T','GL.CP2846.01','GB.FO.51517','BF.FO.22201','GB.SN.18000300037','GB.SD.053080','GF.CP2631.5151','GF.CP2631.5171','FN.SN.18526150','GB.SD4120.6702','GL.CP8586.00','FH.SN.340100','GB.SD.073080','BF.FO.22202','CI.CP9795.99','FA.SN.18083','GL.CP8559.01','GH.CP2156.99','GL.CP2637.01','GB.SD.003080','GL.CP8559.06','GF.CP2631.5111','AI.RL.89100','CI.BS.AA0111','CF.FO.92150','GB.SD.223080','GB.SD.033080','GL.CP8566.01','GO.SN.18000101059','GG.CP2675.2702']
+prods = ['AA.GN4801.00','AE.MO.14DBRS0K00','AE.MO.TB4BRS0K00','AI.MO.89103','AL.SKN.21007','AL.SKN.21010','AL.SKN.21012','AL.SKN.21013','AL.SKN.21050','AL.SKN.21090','AL.SKN.21148','AL.SKN.21149','AL.SKN.21165','AL.SKN.21166','AL.SKN.21167','AL.SKN.21391','AL.SKN.21401','AL.SKN.21403','AL.SKN.21539','BB.HZ.9045436','BB.MO4112.80','BB.MO4113.00','BC.HZ.9486420','BF.FO.21205','BF.FO.21636','BF.FO.22303','BF.VI.2140T','BF.VI.2140V','BH.NKI.4830','DA.TS.428048.11','DH.GN6010.91','EA.EVL.2154015','EA.EVL.2154045','FA.SN.18000200002','FA.SN.18000200004','FA.SN.18000200008','FC.FO.60902','FE.CP.9610','FH.FO.60711','FH.SN.340102','FH.SN.340105','GB.BC.921403','GB.CP2225.1003','GB.FO.51405','GB.FO.51517','GB.SD.003080','GB.SD.023080','GB.SD.033080','GB.SN.18000300004','GB.SN.18000300005','GB.SN.18000300007','GF.CP2631.5111','GF.CP4621.0202','GF.CP4621.0203','GG.CP4615.9302','GL.CP2536.01','GL.CP2634.02','GL.CP2634.03','GL.CP2637.01','GL.CP2686.00','GL.CP2836.01','GL.CP2846.01','GL.CP3616.01','GL.CP8559.01','GL.CP8559.02','GL.CP8559.03','GL.CP8559.06','GL.CP8559.07','GL.CP8559.22','GL.CP8566.01','GL.CP8566.02','GL.CP8566.03','GL.CP8566.99','GL.CP8576.01','GL.CP8576.03','GL.CP8586.00','GL.CP8599.01','GL.SN.180001000','GL.SN.180002000','GL.SN.180004000','GL.SN.180006000','GO.SN.18000100021','GO.SN.18000101059','HB.CP3649.0002','HB.CP7550.30','HB.CP9520.18','HC.CP9540.12','PF.SN.8103223']
 for prod in prods:
     print(f"PRODUCT={prod}")
     fields = self.env['svl.recompute']._fields
     fields = list(fields.keys())
     defaults = self.env['svl.recompute'].default_get(fields)
-    defaults.update(company_id=1, recompute_type='fifo_average', date_from='2023-01-01', run_svl_recompute=True, update_svl_values=True, fix_remaining_qty=True, update_account_moves=True)
+    defaults.update(company_id=1, recompute_type='fifo_average', date_from='2023-07-01', run_svl_recompute=True, update_svl_values=True, fix_remaining_qty=True, update_account_moves=True)
     wiz = self.env['svl.recompute'].create(defaults)
     products = self.env['product.product'].search([('default_code', '=', prod)])
     #products = self.env['product.product'].search([('type', '=', 'product'), ('categ_id', '=', 37), ('id', 'not in', (294, 557, 789))])
@@ -169,10 +168,6 @@ class StockValuationLayerRecompute(models.TransientModel):
         if svl_loc_out_lc:
             svl_loc_out_lc.mapped('account_move_id').button_draft()
             svl_loc_out_lc.mapped('account_move_id').button_cancel()
-            self._cr.execute(
-                'delete from stock_landed_cost where id in (select stock_landed_cost_id from stock_valuation_layer where id in %s)', 
-                (tuple(svl_loc_out_lc.ids),)
-            )
             self._cr.execute('delete from stock_valuation_layer where id in %s', (tuple(svl_loc_out_lc.ids),))        
 
     def _check_average(self, product, locations):
@@ -454,7 +449,6 @@ class StockValuationLayerRecompute(models.TransientModel):
         #delete landed costs for svls out
         svl_loc_out = svls.filtered(lambda svl: svl.quantity < 0)
         self._delete_out_lcs(svl_loc_out)
-
         svls = list(svls)
         last_avg = avg[0]
         while svls:
