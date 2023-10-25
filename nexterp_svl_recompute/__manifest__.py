@@ -2,7 +2,7 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl.html).
 {
     "name": "Romania - Stock Valuation Layer Recomputation",
-    "version": "14.0.1.0.3",
+    "version": "14.0.1.0.6",
     "category": "Localization",
     "summary": "Romania - Stock Valuation Layer Recomputation",
     "author": "NextERP Romania," "Odoo Community Association (OCA)",

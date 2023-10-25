@@ -7,19 +7,22 @@
         <field name="arch" type="xml">
             <form string="Product Recompute">
                 <group>
+                    <field name="debug"/>                    
                     <field name="company_id" readonly="1"/>   
                     <field name="recompute_type" />
                     <field name="product_ids" widget="many2many_tags"/>
+                    <field name="lot_id" domain="[('company_id', '=', company_id)]"/>                    
                     <field name="date_from"/>
                     <field name="account_move_date"/>
                     <field name="run_svl_recompute" />                    
-                    <field name="update_svl_values" />
                     <field name="fix_remaining_qty" />                    
+                     <field name="update_svl_values" />
                     <field name="update_account_moves" string="Create/Update SVL Account Move"/>
                 </group>
-                <notebook>
-                    <sheet>
+                <notebook colspan="4">
+                    <page>
                         <group>
+                            <field name="compute_locations"/>
                             <field name="location_ids">
                                 <tree editable="bottom">
                                     <field name="sequence" widget="handle"/>
@@ -28,7 +31,7 @@
 
                             </field>
                         </group>
-                    </sheet>
+                    </page>
                 </notebook>
                 <footer>
                     <button name="buttton_do_correction" string="Recompute" type="object" class="btn-primary"/>
