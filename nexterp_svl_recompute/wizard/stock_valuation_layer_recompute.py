@@ -245,7 +245,6 @@ class StockValuationLayerRecompute(models.TransientModel):
         locations = self.location_ids.sorted(lambda l: l.sequence)
 
         locs = [l.location_id for l in locations]
-        import ipdb; ipdb.set_trace(context=10)
         if self.recompute_type == 'fifo_average':
             for product in products:
                 if product.cost_method == "fifo":
