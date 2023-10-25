@@ -49,6 +49,8 @@ class StockValuationLayerRecompute(models.TransientModel):
     company_id = fields.Many2one('res.company', default=lambda self: self.env.company)
     product_ids = fields.Many2many('product.product', string="Related products", check_company=True)
     date_from = fields.Date("Recompute Start Date")
+    account_move_date = fields.Date("Account Move Date >=")
+
     location_ids = fields.One2many(
         'svl.recompute.location',
         'svl_recompute_id',
@@ -789,11 +791,11 @@ class StockValuationLayerRecompute(models.TransientModel):
             products = self.env['product.product'].search([])
 
         locations = self.location_ids.mapped('location_id')
-        date_from = fields.Datetime.to_datetime(self.date_from)
+        account_move_date = fields.Datetime.to_datetime(self.account_move_date)
         domain = ['&',
                     '&',
                         ('product_id', 'in', products.ids),
-                        ('create_date', '>=', date_from),
+                        ('create_date', '>=', account_move_date),
                     '|',
                         '&',
                             ('l10n_ro_location_dest_id', 'in', locations.ids),

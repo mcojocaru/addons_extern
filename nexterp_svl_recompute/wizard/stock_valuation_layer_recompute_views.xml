@@ -11,6 +11,7 @@
                     <field name="recompute_type" />
                     <field name="product_ids" widget="many2many_tags"/>
                     <field name="date_from"/>
+                    <field name="account_move_date"/>
                     <field name="run_svl_recompute" />                    
                     <field name="update_svl_values" />
                     <field name="fix_remaining_qty" />                    
