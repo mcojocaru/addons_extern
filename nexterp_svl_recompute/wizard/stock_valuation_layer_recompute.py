@@ -62,7 +62,7 @@ class StockValuationLayerRecompute(models.TransientModel):
     product_ids = fields.Many2many('product.product', string="Related products", check_company=True)
     lot_id = fields.Many2one('stock.production.lot')
     date_from = fields.Date("Recompute Start Date")
-    account_move_date = fields.Date("Account Move Date >=")
+    account_move_date = fields.Datetime("Account Move Date >=")
 
     location_ids = fields.One2many(
         'svl.recompute.location',
@@ -201,9 +201,9 @@ class StockValuationLayerRecompute(models.TransientModel):
                     ('product_id', '=', product.id)
                 ]
                 if lot:
-                    domain += [('lot_id', '=', lot.id)]
+                    domain += [('l10n_ro_lot_ids', 'in', lot.ids)]
 
-                next_moves = self.env['stock.move.line'].search()
+                next_moves = self.env['stock.move.line'].search(domain)
                 for m in next_moves:
                     if m not in walked_moves:
                         walked_moves.append(m)
@@ -212,14 +212,14 @@ class StockValuationLayerRecompute(models.TransientModel):
         domain = [
             ('company_id', '=', self.company_id.id),
             ('product_id', '=', product.id),
-            ('location_id.usage', 'in', ('supplier', 'inventory'))
+            ('l10n_ro_location_id.usage', 'in', ('supplier', 'inventory'))
         ]
         if lot:
             domain += [('lot_ids', 'in', lot.ids)]
         svls = self.env['stock.valuation.layer'].search(domain)
         for svl in svls:
             walked_movs = []
-            walk(svl.stock_move_line_id)
+            walk(svl.l10n_ro_stock_move_line_id)
 
         domain_all = [
             ('company_id', '=', self.company_id.id),
@@ -231,8 +231,8 @@ class StockValuationLayerRecompute(models.TransientModel):
         svls_all = self.env['stock.valuation.layer'].search(domain_all)
         svls_out = svls_all.filtered(lambda s: s.stock_move_id._is_out())
         for so in svls_out:
-            if so.location_id not in locs:
-                locs.append(so.location_id)
+            if so.l10n_ro_location_id not in locs:
+                locs.append(so.l10n_ro_location_id)
 
         return locs
 
@@ -712,7 +712,10 @@ class StockValuationLayerRecompute(models.TransientModel):
             last_avg = last_svl_before_date.unit_cost
         product.sudo().with_company(self.env.company).with_context(disable_auto_svl=True).standard_price = last_avg
 
-    def _run_fifo(self, product, loc):
+    def is_reception_return(self, svl):
+        return svl.l10n_ro_valued_type == 'reception_return'
+
+    def _run_fifo(self, product, loc, lot_id=None):
         if self.debug:
             _logger.info(f"PRODUCT={product}, LOCATION={loc.name_get()[0][1]}, LOT={lot_id and lot_id.name or ''}")
         date_from = fields.Datetime.to_datetime(self.date_from)
@@ -724,7 +727,7 @@ class StockValuationLayerRecompute(models.TransientModel):
             [
                 ('product_id', '=', product.id), 
                 ("l10n_ro_location_dest_id", "=", loc.id), 
-                ('l10n_ro_quantity', '>', 0.001)
+                ('quantity', '>', 0.001)
             ]
         )
 
@@ -883,7 +886,7 @@ class StockValuationLayerRecompute(models.TransientModel):
                             lambda svl: (
                                 svl.id != svl_out.id 
                                 and svl.quantity > 0 
-                                and svl.stock_move_line_id == svl_out.stock_move_line_id
+                                and svl.l10n_ro_stock_move_line_id == svl_out.l10n_ro_stock_move_line_id
                             )
                         )
                         if plus_svl:
@@ -1080,11 +1083,12 @@ class StockValuationLayerRecompute(models.TransientModel):
             products = self.env['product.product'].search([])
 
         locations = self.location_ids.mapped('location_id')
+        date_from = fields.Datetime.to_datetime(self.date_from)        
         account_move_date = fields.Datetime.to_datetime(self.account_move_date)
         domain = ['&',
                     '&',
                         ('product_id', 'in', products.ids),
-                        ('create_date', '>=', account_move_date),
+                        ('create_date', '>=', date_from),
                     '|',
                         '&',
                             ('l10n_ro_location_dest_id', 'in', locations.ids),
@@ -1115,7 +1119,7 @@ class StockValuationLayerRecompute(models.TransientModel):
                 svl.remaining_qty = svl.new_remaining_qty
                 svl.new_remaining_qty = new
 
-            if self.update_account_moves:
+            if self.update_account_moves and svl.create_date >= self.account_move_date:
                 if (svl.quantity < 0 or svl.stock_move_id.move_orig_ids):
                     svl = svl.sudo()
                     if svl.account_move_id and svl.account_move_id.amount_total != 0.0:
