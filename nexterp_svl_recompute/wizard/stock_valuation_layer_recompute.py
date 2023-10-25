@@ -253,7 +253,7 @@ class StockValuationLayerRecompute(models.TransientModel):
                     if self.lot_id:
                         lot_ids = self.lot_id
                     else:
-                        lot_ids = self.env['stock.lot'].search([
+                        lot_ids = self.env['stock.production.lot'].search([
                             ('product_id', '=', product.id)
                         ])
                     
