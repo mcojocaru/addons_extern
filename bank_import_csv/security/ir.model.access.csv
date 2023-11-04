@@ -1,3 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_import_bank,access_import_bank,model_account_payment_import_bank,account.group_account_manager,1,1,1,1
-result_wizard,result_wizard,model_result_wizard,account.group_account_manager,1,1,1,1
