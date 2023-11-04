@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<templates id="template" xml:space="preserve">
-	<t  t-extend="stock_barcode_settings_widget">
-	   <t t-jquery=".o_print_delivery_slip" t-operation="after">
-            <button t-if="widget.model == 'stock.picking'" class="btn-lg btn btn-dark text-uppercase o_print_created_invoice">Print Created Invoice</button>
-	   </t>
-	</t>
-
-</templates>
