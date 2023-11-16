@@ -186,10 +186,6 @@ class StockValuationLayerRecompute(models.TransientModel):
         if svl_loc_out_lc:
             svl_loc_out_lc.mapped('account_move_id').button_draft()
             svl_loc_out_lc.mapped('account_move_id').button_cancel()
-            self._cr.execute(
-                'delete from stock_landed_cost where id in (select stock_landed_cost_id from stock_valuation_layer where id in %s)', 
-                (tuple(svl_loc_out_lc.ids),)
-            )
             self._cr.execute('delete from stock_valuation_layer where id in %s', (tuple(svl_loc_out_lc.ids),))        
 
     def _run_average(self, product, locations):
