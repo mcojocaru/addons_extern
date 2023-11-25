@@ -20,6 +20,6 @@ used at simple accounting by cbs ( no enterprise module) no use of account.bank.
     ],
 
     'installable': True,
-    'auto_install': True,
+    'auto_install': False,
     'license': 'AGPL-3',
 }

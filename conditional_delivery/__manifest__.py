@@ -14,6 +14,6 @@ for example [('name','ilike','a')] put on a delivery will show this delivery onl
      ],
 
     'installable': True,
-    'auto_install': True,
+    'auto_install': False,
     'license': 'AGPL-3',
 }
