@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="stock_valuation_layer_fix_final_form_view" model="ir.ui.view">
+        <field name="name">svl.fix.final.form</field>
+        <field name="model">svl.fix.final</field>
+        <field name="arch" type="xml">
+            <form string="Fix Final Values" class="dialog_full_screen">
+                <group>
+                    <field name="company_id" readonly="1"/>   
+                    <field name="je_post_date"/>
+                </group>
+                <notebook>
+                    <sheet>
+                        <group>
+                            <field name="product_ids" limit="500">
+                                <tree editable="bottom" create="0">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="product_id"/>
+                                    <field name="location_id"/>
+                                    <field name="last_svl_id" invisible="1"/>
+                                    <field name="final_value"/>
+                                    <field name="svl_last_date" widget="date" string="Last Out Date"/>
+                                    <field name="fix_final_date"/>
+                                </tree>
+                            </field>
+                        </group>
+                    </sheet>
+                </notebook>
+                <footer>
+                    <button name="buttton_do_correction" string="Recompute" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel" />
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_svl_fix_final_value" model="ir.actions.act_window">
+        <field name="name">SVL Fix Final Value</field>
+        <field name="res_model">svl.fix.final</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="menu_svl_fix_final" model="ir.ui.menu">
+        <field name="name">Final Value Report</field>
+        <field name="action" ref="action_svl_fix_final_value" />
+        <field name="parent_id" ref="stock.menu_warehouse_report" />
+        <field name="groups_id" eval="[(4, ref('stock.group_stock_user'))]" />
+        <field name="is_l10n_ro_record" eval="True" />
+    </record>    
+
+</odoo>
