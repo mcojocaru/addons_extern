@@ -9,6 +9,7 @@
                 <group>
                     <field name="company_id" readonly="1"/>   
                     <field name="je_post_date"/>
+                    <field name="create_journal_entries"/>
                 </group>
                 <notebook>
                     <sheet>
@@ -16,10 +17,10 @@
                             <field name="product_ids" limit="500">
                                 <tree editable="bottom" create="0">
                                     <field name="sequence" widget="handle"/>
-                                    <field name="product_id"/>
-                                    <field name="location_id"/>
-                                    <field name="last_svl_id" invisible="1"/>
-                                    <field name="final_value"/>
+                                    <field name="product_id" readonly="1" force_save="1"/>
+                                    <field name="location_id" readonly="1" force_save="1"/>
+                                    <field name="last_svl_id" invisible="1" force_save="1"/>
+                                    <field name="final_value" readonly="1" force_save="1"/>
                                     <field name="svl_last_date" widget="date" string="Last Out Date"/>
                                     <field name="fix_final_date"/>
                                 </tree>
@@ -28,7 +29,7 @@
                     </sheet>
                 </notebook>
                 <footer>
-                    <button name="buttton_do_correction" string="Recompute" type="object" class="btn-primary"/>
+                    <button name="buttton_do_correction" string="Apply" type="object" class="btn-primary"/>
                     <button string="Cancel" class="btn-secondary" special="cancel" />
                 </footer>
             </form>
@@ -43,7 +44,7 @@
     </record>
 
     <record id="menu_svl_fix_final" model="ir.ui.menu">
-        <field name="name">Final Value Report</field>
+        <field name="name">0 Qty Final Value Correction</field>
         <field name="action" ref="action_svl_fix_final_value" />
         <field name="parent_id" ref="stock.menu_warehouse_report" />
         <field name="groups_id" eval="[(4, ref('stock.group_stock_user'))]" />

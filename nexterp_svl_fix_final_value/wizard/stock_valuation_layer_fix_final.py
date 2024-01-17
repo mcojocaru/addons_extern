@@ -23,19 +23,23 @@ class SVLFixFinalProduct(models.TransientModel):
         'svl.fix.final', string='Field Label',
     )
     last_svl_id = fields.Many2one(
-        'stock.valuation.layer', compute_sudo=True, compute='_compute_final_values'
+        'stock.valuation.layer', compute_sudo=True, 
+        store=True, compute='_compute_final_values'
     )
     final_value = fields.Float(readonly=True)
     fix_final_date= fields.Date(
         compute='_compute_final_values', store=True, compute_sudo=True,
         readonly=False
     )
-    svl_last_date = fields.Datetime(string="Last SVL Date", related='last_svl_id.create_date')
-    to_fix = fields.Boolean(default=True)
+    svl_last_date = fields.Datetime(
+        string="Last SVL Date", related='last_svl_id.create_date'
+    )
 
     @api.depends('product_id', 'location_id')
     def _compute_final_values(self):
         for rec in self:
+            rec.last_svl_id = self.env['stock.valuation.layer']
+            rec.svl_last_date = rec.wizard_id.je_post_date            
             svl = self.env['stock.valuation.layer'].search(
                 [
                     ('product_id', '=', rec.product_id.id), 
@@ -44,19 +48,21 @@ class SVLFixFinalProduct(models.TransientModel):
                 ], 
                 order='create_date desc', limit=1
             )
-            rec.last_svl_id = svl.id
-            rec.svl_last_date = svl.create_date
-            # svl_date = datetime.combine(svl.create_date, time.min)
-            svl_date = fields.Date.to_date(svl.create_date)
-            if rec.wizard_id.je_post_date and rec.wizard_id.je_post_date >= svl_date:
-                rec.fix_final_date = rec.wizard_id.je_post_date
-            else:
-                rec.fix_final_date = svl_date
+            if svl:
+                rec.last_svl_id = svl.id
+                rec.svl_last_date = svl.create_date
+                # svl_date = datetime.combine(svl.create_date, time.min)
+                svl_date = fields.Date.to_date(svl.create_date)
+                if rec.wizard_id.je_post_date and rec.wizard_id.je_post_date >= svl_date:
+                    rec.fix_final_date = rec.wizard_id.je_post_date
+                else:
+                    rec.fix_final_date = svl_date
 
     @api.onchange('fix_final_date')
     def onchange_fix_final_date(self):
         svl_date = fields.Date.to_date(self.create_date)
-        if self.fix_final_date < self.svl_last_date:
+        svl_last_date = fields.Date.to_date(self.svl_last_date)
+        if self.fix_final_date < svl_last_date:
             raise UserError(
                 _('Date must be greater than or equal to {}').format(
                     self.svl_last_date
@@ -78,6 +84,9 @@ class StockValuationLayerFixFinalValue(models.TransientModel):
         'svl.fix.final.product',
         'wizard_id',
         string='Products',
+    )
+    create_journal_entries = fields.Boolean(
+        string='Create Journal Entries', default=False
     )
 
     @api.model
@@ -127,19 +136,21 @@ class StockValuationLayerFixFinalValue(models.TransientModel):
                     float_is_zero(quantity_svl, precision_rounding=prod.uom_id.rounding)                    
                     and not float_is_zero(value_svl, precision_rounding=prec_digits)
                 ):
-                    product_lines.append((0, 0, {
-                            'sequence': idx, 
-                            'product_id': prod.id,
-                            'location_id': location_id.id,
-                            'final_value': value_svl,
-                            'wizard_id': self.id,
-                        })
-                    )
+                    line_fields = [f for f in self.env['svl.fix.final.product']._fields.keys()]
+                    line_data_tmpl = self.env['svl.fix.final.product'].default_get(line_fields)
+                    line_data = dict(line_data_tmpl)
+                    line_data.update({
+                        'sequence': idx, 
+                        'product_id': prod.id,
+                        'location_id': location_id.id,
+                        'final_value': value_svl,
+                        'wizard_id': self.id,
+                    })
+                    product_lines.append((0, 0, line_data))
                     idx += 10
 
         res['product_ids'] = product_lines
         return res
-
 
     @api.onchange('je_post_date')
     def onchange_fix_final_date(self):
@@ -147,4 +158,21 @@ class StockValuationLayerFixFinalValue(models.TransientModel):
             line.fix_final_date = self.je_post_date
 
     def buttton_do_correction(self):
-        pass
+        for line in self.product_ids:
+            svl = self.env['stock.valuation.layer'].create([{
+                'product_id': line.product_id.id,
+                'description': "0 QTY Fix final value",
+                'company_id': line.wizard_id.company_id.id,
+                'value': -line.final_value,
+                'quantity': 0,
+                'l10n_ro_location_id': line.location_id.id,
+                'l10n_ro_location_dest_id': line.location_id.id,
+                'stock_move_id': line.last_svl_id.stock_move_id.id,
+                'l10n_ro_valued_type': line.last_svl_id.l10n_ro_valued_type,
+            }])
+            svl.update({'create_date': line.fix_final_date})
+            if self.create_journal_entries:
+                sm = svl.stock_move_id
+                sm.with_context(force_period_date=svl.create_date)._account_entry_move(
+                    svl.quantity, svl.description, svl.id, svl.value
+                )
